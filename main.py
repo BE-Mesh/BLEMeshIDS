@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -22,12 +21,13 @@ def save_cleaned_copy(df):
 
 
 if __name__ == '__main__':
-    src_path = "A:\\Download\\Tesi\\Dataset BLE MESH\\experiment_I_rpi.csv"
-    sub_path = "A:\\Download\\Tesi\\Dataset BLE MESH\\sub.csv"
+    common_path = "/home/thecave3/Scaricati/btmesh-dataset/"  # "A:\\Download\\Tesi\\Dataset BLE MESH\\"
+    src_path = common_path + "experiment_I_rpi.csv"
+    sub_path = common_path + "sub.csv"
     path = "experiment_I.csv"
 
-    df = pd.read_csv(path)
-    # df = pd.read_csv(src_path , sep=', ', engine='python')
+    # df = pd.read_csv(path)
+    df = pd.read_csv(src_path, sep=', ', engine='python')
 
     # print(df.keys())
     # print(set(list(df["src"]) + (list(df["dest"]))))
@@ -43,8 +43,8 @@ if __name__ == '__main__':
     df = df.drop(df[df.dest == "0000"].index)  # ??
 
     G: nx.DiGraph = nx.from_pandas_edgelist(df, 'src', 'dest', create_using=nx.DiGraph)
-    print(len(G.nodes()))
-    print(len(G.edges()))
+    # print(len(G.nodes()))
+    # print(len(G.edges()))
 
     # Plot it
     # nx.draw(G, with_labels=True))
