@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # save_cleaned_copy(df)
 
-    df = df.drop(df[df.dest == "fffd"].index)  # broadcast
+    # df = df.drop(df[df.dest == "ffff"].index)  # broadcast
     df = df.drop(df[df.src == "0000"].index)  # ??
     df = df.drop(df[df.dest == "0000"].index)  # ??
 
