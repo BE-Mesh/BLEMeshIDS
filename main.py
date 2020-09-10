@@ -1,3 +1,5 @@
+import platform
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
@@ -43,16 +45,9 @@ def plot_dataset(dataframe):
     plt.show()
 
 
-if __name__ == '__main__':
-    common_path = "/home/thecave3/Scaricati/btmesh-dataset/"  # "A:\\Download\\Tesi\\Dataset BLE MESH\\"
-    experiment_I = "experiment_I_rpi.csv"
-    experiment_II = "experiment_II_lpn.csv"
-    src_path = common_path + experiment_I
-    sub_path = common_path + "sub.csv"
-    path = "data/experiment_I.csv"
-
+def preprocessing(source_path: str, t_window: int = 1000000) -> pd.DataFrame:
     # df = pd.read_csv(path)
-    df = pd.read_csv(src_path, sep=', ', engine='python')
+    df = pd.read_csv(source_path, sep=', ', engine='python')
 
     df = df.drop(df[df.dest == "ffff"].index)  # broadcast
     df = df.drop(df[df.src == "0000"].index)  # ??
@@ -60,7 +55,6 @@ if __name__ == '__main__':
 
     # df.sample(n=500).to_csv(path)
 
-    t_window = 1000000  # ms
     min_time = df["sent time"].min()
     df["time_window"] = np.floor((df["sent time"] - min_time) / t_window)
     dfs = []
@@ -82,11 +76,25 @@ if __name__ == '__main__':
             # print(temp_dict)
             dfs.append(pd.DataFrame(temp_dict, index=[0]))
 
-    result_df = pd.concat(dfs)
+    return pd.concat(dfs)
+
+
+if __name__ == '__main__':
+    linux_path = "/home/thecave3/Scaricati/btmesh-dataset/"
+    windows_path = "A:\\Download\\Tesi\\Dataset BLE MESH\\"
+    experiment_I = "experiment_I_rpi.csv"
+    experiment_II = "experiment_II_lpn.csv"
+    src_path = (windows_path if platform.system() == 'Windows' else linux_path) + experiment_I
+    # path = "data/experiment_I.csv"
+
+    print("Started preprocessing")
+    result_df = preprocessing(source_path=src_path)
+    print("Finished preprocessing")
 
     result_np = result_df.to_numpy()
     pca = PCA(2)  # target dimension
     projected = pca.fit_transform(result_np)
+
     plt.scatter(projected[:, 0], projected[:, 1])
     plt.xlabel('component 1')
     plt.ylabel('component 2')
