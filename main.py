@@ -47,14 +47,11 @@ if __name__ == '__main__':
     sub_path = common_path + "sub.csv"
     path = "data/experiment_I.csv"
 
-    # df = pd.read_csv(path)
-    df = pd.read_csv(src_path, sep=', ', engine='python')
+    df = pd.read_csv(path)
+    # df = pd.read_csv(src_path, sep=', ', engine='python')
+    # clean_df(df)
+    # df.to_csv(path)
 
-    clean_df(df)
-
-    df.to_csv(path)
-
-    # print(df.keys())
     # print(set(list(df["src"]) + (list(df["dest"]))))
     # nodes = list(set(list(df["src"]) + (list(df["dest"]))))
 
