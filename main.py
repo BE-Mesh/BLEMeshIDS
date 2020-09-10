@@ -45,12 +45,18 @@ def plot_dataset(dataframe):
 
 if __name__ == '__main__':
     common_path = "/home/thecave3/Scaricati/btmesh-dataset/"  # "A:\\Download\\Tesi\\Dataset BLE MESH\\"
-    src_path = common_path + "experiment_II_lpn.csv"
+    experiment_I = "experiment_I_rpi.csv"
+    experiment_II = "experiment_II_lpn.csv"
+    src_path = common_path + experiment_I
     sub_path = common_path + "sub.csv"
     path = "data/experiment_I.csv"
 
     # df = pd.read_csv(path)
     df = pd.read_csv(src_path, sep=', ', engine='python')
+
+    df = df.drop(df[df.dest == "ffff"].index)  # broadcast
+    df = df.drop(df[df.src == "0000"].index)  # ??
+    df = df.drop(df[df.dest == "0000"].index)  # ??
 
     # df.sample(n=500).to_csv(path)
 
@@ -84,7 +90,7 @@ if __name__ == '__main__':
     plt.scatter(projected[:, 0], projected[:, 1])
     plt.xlabel('component 1')
     plt.ylabel('component 2')
-    plt.title("PCA of Dataset from experiment II")
+    plt.title("PCA of Dataset " + experiment_I)
     plt.colorbar()
     plt.show()
 
