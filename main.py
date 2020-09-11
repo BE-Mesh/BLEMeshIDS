@@ -46,8 +46,10 @@ def plot_dataset(dataframe):
 
 
 def preprocessing(source_path: str, t_window: int = 1000000) -> pd.DataFrame:
-    # df = pd.read_csv(path)
-    df = pd.read_csv(source_path, sep=', ', engine='python')
+    # df = pd.read_csv(source_path, sep=', ', engine='python')
+    df = pd.read_csv(source_path)
+
+    print(df["msglen"])
 
     df = df.drop(df[df.dest == "ffff"].index)  # broadcast
     df = df.drop(df[df.src == "0000"].index)  # ??
@@ -71,10 +73,16 @@ def preprocessing(source_path: str, t_window: int = 1000000) -> pd.DataFrame:
             pkts_dst = list(dict(zip(unique, counts)).values())  # packtes per dest
             temp_dict["dest_mean"] = np.mean(pkts_dst)
             temp_dict["dest_std"] = np.std(pkts_dst)
-            # tmp_dict[""]
+            temp_dict["size_pkt_mean"] = np.mean(window["msglen"])
+            temp_dict["size_pkt_std"] = np.std(window["msglen"])
+
             # TODO finish features extraction
+            # add average value change of seq field of packets with the same value of src field.
+
             # print(temp_dict)
             dfs.append(pd.DataFrame(temp_dict, index=[0]))
+
+    # TODO feature has to be normalized
 
     return pd.concat(dfs)
 
@@ -85,7 +93,7 @@ if __name__ == '__main__':
     experiment_I = "experiment_I_rpi.csv"
     experiment_II = "experiment_II_lpn.csv"
     src_path = (windows_path if platform.system() == 'Windows' else linux_path) + experiment_I
-    # path = "data/experiment_I.csv"
+    path = "data/experiment_I.csv"
 
     print("Started preprocessing")
     result_df = preprocessing(source_path=src_path)
