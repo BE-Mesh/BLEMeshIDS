@@ -45,15 +45,13 @@ def plot_dataset(dataframe):
     plt.show()
 
 
-def preprocessing(source_path: str, t_window: int = 1000000) -> pd.DataFrame:
-    # df = pd.read_csv(source_path, sep=', ', engine='python')
+def preprocessing(source_path: str, clean_bcast: bool = False, t_window: int = 1000000) -> pd.DataFrame:
     df = pd.read_csv(source_path)
 
-    print(df["msglen"])
-
-    df = df.drop(df[df.dest == "ffff"].index)  # broadcast
-    df = df.drop(df[df.src == "0000"].index)  # ??
-    df = df.drop(df[df.dest == "0000"].index)  # ??
+    if clean_bcast:
+        df = df.drop(df[df.dest == "ffff"].index)  # broadcast
+        df = df.drop(df[df.src == "0000"].index)  # ??
+        df = df.drop(df[df.dest == "0000"].index)  # ??
 
     # df.sample(n=500).to_csv(path)
 
@@ -88,15 +86,13 @@ def preprocessing(source_path: str, t_window: int = 1000000) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    linux_path = "/home/thecave3/Scaricati/btmesh-dataset/"
-    windows_path = "A:\\Download\\Tesi\\Dataset BLE MESH\\"
     experiment_I = "experiment_I_rpi.csv"
     experiment_II = "experiment_II_lpn.csv"
-    src_path = (windows_path if platform.system() == 'Windows' else linux_path) + experiment_I
-    path = "data/experiment_I.csv"
+    target_experiment = experiment_I
+    path = "data/" + target_experiment
 
     print("Started preprocessing")
-    result_df = preprocessing(source_path=src_path)
+    result_df = preprocessing(source_path=path)
     print("Finished preprocessing")
 
     result_np = result_df.to_numpy()
@@ -106,7 +102,7 @@ if __name__ == '__main__':
     plt.scatter(projected[:, 0], projected[:, 1])
     plt.xlabel('component 1')
     plt.ylabel('component 2')
-    plt.title("PCA of Dataset " + experiment_I)
+    plt.title("PCA of Dataset " + target_experiment)
     plt.colorbar()
     plt.show()
 
