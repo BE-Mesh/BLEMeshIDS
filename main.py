@@ -1,11 +1,8 @@
-import platform
-
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
-
 
 def clean_df(dataframe):
     del dataframe["experiment"]
@@ -45,7 +42,7 @@ def plot_dataset(dataframe):
     plt.show()
 
 
-def preprocessing(source_path: str, clean_bcast: bool = False, t_window: int = 1000000) -> pd.DataFrame:
+def preprocessing_phase(source_path: str, t_window: int, clean_bcast: bool = False, ) -> pd.DataFrame:
     df = pd.read_csv(source_path)
 
     if clean_bcast:
@@ -80,9 +77,22 @@ def preprocessing(source_path: str, clean_bcast: bool = False, t_window: int = 1
             # print(temp_dict)
             dfs.append(pd.DataFrame(temp_dict, index=[0]))
 
-    # TODO feature has to be normalized
+    result_df = pd.concat(dfs)
+    normalized_df = (result_df - result_df.min()) / (result_df.max() - result_df.min())
+    return normalized_df
 
-    return pd.concat(dfs)
+
+def plot_pca(df: pd.DataFrame):
+    result_np = df.to_numpy()
+    pca = PCA(2)  # target dimension
+    projected = pca.fit_transform(result_np)
+    plt.scatter(projected[:, 0], projected[:, 1])
+    plt.xlabel('component 1')
+    plt.ylabel('component 2')
+    plt.title("PCA of Dataset " + target_experiment)
+    plt.suptitle(f"time windows: {time_window} ms")
+    plt.colorbar()
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -90,21 +100,13 @@ if __name__ == '__main__':
     experiment_II = "experiment_II_lpn.csv"
     target_experiment = experiment_I
     path = "data/" + target_experiment
+    time_window = 1000000
 
     print("Started preprocessing")
-    result_df = preprocessing(source_path=path)
+    res_df = preprocessing_phase(source_path=path, t_window=time_window)
     print("Finished preprocessing")
 
-    result_np = result_df.to_numpy()
-    pca = PCA(2)  # target dimension
-    projected = pca.fit_transform(result_np)
-
-    plt.scatter(projected[:, 0], projected[:, 1])
-    plt.xlabel('component 1')
-    plt.ylabel('component 2')
-    plt.title("PCA of Dataset " + target_experiment)
-    plt.colorbar()
-    plt.show()
+    plot_pca(res_df)
 
 # print(df["sent time"])
 
