@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 import numpy as np
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+
 
 def clean_df(dataframe):
     del dataframe["experiment"]
@@ -80,9 +82,10 @@ def preprocessing_phase(source_path: str, t_window: int, clean_bcast: bool = Fal
     result_df = pd.concat(dfs)
     normalized_df = (result_df - result_df.min()) / (result_df.max() - result_df.min())
     return normalized_df
+    # return result_df
 
 
-def plot_pca(df: pd.DataFrame):
+def plot_2d_pca(df: pd.DataFrame):
     result_np = df.to_numpy()
     pca = PCA(2)  # target dimension
     projected = pca.fit_transform(result_np)
@@ -93,6 +96,39 @@ def plot_pca(df: pd.DataFrame):
     plt.suptitle(f"time windows: {time_window} ms")
     plt.colorbar()
     plt.show()
+
+
+def plot_3d_pca(df: pd.DataFrame):
+    pca = PCA(n_components=3)
+    pca.fit(df)
+
+    # Store results of PCA in a data frame
+    result = pd.DataFrame(pca.transform(df), columns=['PCA%i' % i for i in range(3)], index=df.index)
+
+    # Plot initialisation
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(result['PCA0'], result['PCA1'], result['PCA2'], cmap="Set2_r", s=60)
+
+    # make simple, bare axis lines through space:
+    xAxisLine = ((min(result['PCA0']), max(result['PCA0'])), (0, 0), (0, 0))
+    ax.plot(xAxisLine[0], xAxisLine[1], xAxisLine[2], 'r')
+    yAxisLine = ((0, 0), (min(result['PCA1']), max(result['PCA1'])), (0, 0))
+    ax.plot(yAxisLine[0], yAxisLine[1], yAxisLine[2], 'r')
+    zAxisLine = ((0, 0), (0, 0), (min(result['PCA2']), max(result['PCA2'])))
+    ax.plot(zAxisLine[0], zAxisLine[1], zAxisLine[2], 'r')
+
+    # label the axes
+    ax.set_xlabel("PC1")
+    ax.set_ylabel("PC2")
+    ax.set_zlabel("PC3")
+    ax.set_title("PCA")
+    plt.show()
+    # rotate
+    # for angle in range(0, 360):
+    #     ax.view_init(30, angle)
+    #     plt.draw()
+    #     plt.pause(.001)
 
 
 if __name__ == '__main__':
@@ -106,8 +142,9 @@ if __name__ == '__main__':
     res_df = preprocessing_phase(source_path=path, t_window=time_window)
     print("Finished preprocessing")
 
-    plot_pca(res_df)
+    # plot_2d_pca(res_df)
 
-# print(df["sent time"])
+    plot_3d_pca(res_df)
 
-# df["sent time"] = (df["sent time"] - min_time)
+    # kmeans = KMeans(n_clusters=2, random_state=0).fit(res_df)
+    # print(kmeans.get_params())
