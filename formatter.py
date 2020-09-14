@@ -1,3 +1,4 @@
+import os
 import platform
 
 
@@ -23,10 +24,14 @@ def format_dataset(src_path: str, target_path: str):
 if __name__ == '__main__':
     linux_path = "/home/thecave3/Scaricati/btmesh-dataset/"
     windows_path = "A:\\Download\\Tesi\\Dataset BLE MESH\\"
-    experiment_I = "experiment_I_rpi.csv"
-    experiment_II = "experiment_II_lpn.csv"
-    target_experiment = experiment_II
-    src_path = (windows_path if platform.system() == 'Windows' else linux_path) + target_experiment
-    target_path = "data/" + target_experiment
+    experiments = ["experiment_I_rpi.csv", "experiment_II_lpn.csv"]
+    folder_name = "data/"
 
-    format_dataset(src_path, target_path)
+    if not os.path.exists(folder_name) or not os.path.isdir(folder_name):
+        os.mkdir(folder_name)
+
+    for experiment in experiments:
+        print(f'Formatting dataset "{experiment}"')
+        src_path = (windows_path if platform.system() == 'Windows' else linux_path) + experiment
+        target_path = folder_name + experiment
+        format_dataset(src_path, target_path)
