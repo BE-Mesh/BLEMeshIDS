@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+
+from DataLoader.data_loader import data_loader
+from DataParser.data_parser import preprocessing_phase
 
 
 def clean_df(dataframe):
@@ -42,47 +46,6 @@ def plot_dataset(dataframe):
     nx.draw_networkx_labels(G, pos)
     # nx.draw_networkx_edges(G, pos, edge_color='r', arrows=True)  # edgelist=edges,
     plt.show()
-
-
-def preprocessing_phase(source_path: str, t_window: int, clean_bcast: bool = False, ) -> pd.DataFrame:
-    df = pd.read_csv(source_path)
-
-    if clean_bcast:
-        df = df.drop(df[df.dest == "ffff"].index)  # broadcast
-        df = df.drop(df[df.src == "0000"].index)  # ??
-        df = df.drop(df[df.dest == "0000"].index)  # ??
-
-    # df.sample(n=500).to_csv(path)
-
-    min_time = df["sent time"].min()
-    df["time_window"] = np.floor((df["sent time"] - min_time) / t_window)
-    dfs = []
-    for i in range(int(df["time_window"].max())):
-        window = df.loc[df["time_window"] == i]
-        if not window.empty:
-            temp_dict = {"size": window.size, "rssi_mean": np.mean(window["rssi"]), "rssi_std": np.std(window["rssi"]),
-                         "ttl_mean": np.mean(window["ttl"]), "ttl_std": np.std(window["ttl"])}
-            unique, counts = np.unique(window["src"], return_counts=True)
-            pkts_src = list(dict(zip(unique, counts)).values())  # packtes per source
-            temp_dict["src_mean"] = np.mean(pkts_src)
-            temp_dict["src_std"] = np.std(pkts_src)
-            unique, counts = np.unique(window["dest"], return_counts=True)
-            pkts_dst = list(dict(zip(unique, counts)).values())  # packtes per dest
-            temp_dict["dest_mean"] = np.mean(pkts_dst)
-            temp_dict["dest_std"] = np.std(pkts_dst)
-            temp_dict["size_pkt_mean"] = np.mean(window["msglen"])
-            temp_dict["size_pkt_std"] = np.std(window["msglen"])
-
-            # TODO finish features extraction
-            # add average value change of seq field of packets with the same value of src field.
-
-            # print(temp_dict)
-            dfs.append(pd.DataFrame(temp_dict, index=[0]))
-
-    result_df = pd.concat(dfs)
-    normalized_df = (result_df - result_df.min()) / (result_df.max() - result_df.min())
-    return normalized_df
-    # return result_df
 
 
 def plot_2d_pca(df: pd.DataFrame):
@@ -132,6 +95,7 @@ def plot_3d_pca(df: pd.DataFrame):
 
 
 if __name__ == '__main__':
+    labels = {"legit": 0}
     experiment_I = "experiment_I_rpi.csv"
     experiment_II = "experiment_II_lpn.csv"
     target_experiment = experiment_I
@@ -142,9 +106,25 @@ if __name__ == '__main__':
     res_df = preprocessing_phase(source_path=path, t_window=time_window)
     print("Finished preprocessing")
 
-    # plot_2d_pca(res_df)
+    print(res_df.head())
+    processed_path = "data/preprocessed_" + target_experiment
+    res_df.to_csv(processed_path, index=False)
 
-    plot_3d_pca(res_df)
+    x, y = data_loader(processed_path, labels["legit"])
+
+    # ------
+
+    # append various x and y
+    # images = x (concat x +x )
+    # labels = y  (y+y)
+    # c = list(zip(images,labels)
+    # random.shuffle(c)
+    # x, y = zip(*c)
+    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+
+
+    # plot_2d_pca(res_df)
+    # plot_3d_pca(res_df)
 
     # kmeans = KMeans(n_clusters=2, random_state=0).fit(res_df)
     # print(kmeans.get_params())
