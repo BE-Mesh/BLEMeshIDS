@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def data_loader(path: str, label: int):
+def data_loader(path: str, label: int) -> (np.array, np.array):
     df = pd.read_csv(path)
     x = df.to_numpy()
     shaped = x.shape
@@ -11,6 +11,7 @@ def data_loader(path: str, label: int):
     y = [label for i in range(shaped[0])]
     # print(y)
     # print(len(y))
+    return x, y
 
 
 if __name__ == '__main__':

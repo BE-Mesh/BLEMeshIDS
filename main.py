@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
 
 from DataLoader.data_loader import data_loader
 from DataParser.data_parser import preprocessing_phase
@@ -109,8 +110,20 @@ if __name__ == '__main__':
     processed_path = "data/preprocessed_" + target_experiment
     res_df.to_csv(processed_path, index=False)
 
-    data_loader(processed_path, labels["legit"])
-    # plot_2d_pca(res_df
+    x, y = data_loader(processed_path, labels["legit"])
+
+    # ------
+
+    # append various x and y
+    # images = x (concat x +x )
+    # labels = y  (y+y)
+    # c = list(zip(images,labels)
+    # random.shuffle(c)
+    # x, y = zip(*c)
+    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+
+
+    # plot_2d_pca(res_df)
     # plot_3d_pca(res_df)
 
     # kmeans = KMeans(n_clusters=2, random_state=0).fit(res_df)
