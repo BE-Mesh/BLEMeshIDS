@@ -1,8 +1,9 @@
+import random
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
@@ -48,14 +49,14 @@ def plot_dataset(dataframe):
     plt.show()
 
 
-def plot_2d_pca(df: pd.DataFrame):
+def plot_2d_pca(df: pd.DataFrame, experiment_name: str):
     result_np = df.to_numpy()
     pca = PCA(2)  # target dimension
     projected = pca.fit_transform(result_np)
     plt.scatter(projected[:, 0], projected[:, 1])
     plt.xlabel('component 1')
     plt.ylabel('component 2')
-    plt.title("PCA of Dataset " + target_experiment)
+    plt.title(f'PCA of Dataset {experiment_name}')
     plt.suptitle(f"time windows: {time_window} ms")
     plt.colorbar()
     plt.show()
@@ -95,33 +96,43 @@ def plot_3d_pca(df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    labels = {"legit": 0}
-    experiment_I = "experiment_I_rpi.csv"
-    experiment_II = "experiment_II_lpn.csv"
-    target_experiment = experiment_I
-    path = "data/" + target_experiment
-    time_window = 1000000
+    labels_values = {"legit": 0}
+    experiments = {"experiment_I_rpi.csv": 'legit', "experiment_II_lpn.csv": 'legit'}
 
-    print("Started preprocessing")
-    res_df = preprocessing_phase(source_path=path, t_window=time_window)
-    print("Finished preprocessing")
+    images = np.empty(2)  # TODO cambiare
+    labels = []
+    for experiment in experiments.keys():
+        path = "data/" + experiment
+        time_window = 1000000
 
-    print(res_df.head())
-    processed_path = "data/preprocessed_" + target_experiment
-    res_df.to_csv(processed_path, index=False)
+        print(f'Started preprocessing for "{experiment}"')
+        res_df = preprocessing_phase(source_path=path, t_window=time_window)
+        print("Finished preprocessing")
 
-    x, y = data_loader(processed_path, labels["legit"])
+        # print(res_df.head())
+        processed_path = "data/preprocessed_" + experiment
+        res_df.to_csv(processed_path, index=False)
 
-    # ------
+        x, y = data_loader(processed_path, labels_values[experiments[experiment]])
+        # print(x)
 
-    # append various x and y
-    # images = x (concat x +x )
-    # labels = y  (y+y)
-    # c = list(zip(images,labels)
-    # random.shuffle(c)
-    # x, y = zip(*c)
+        # TODO ValueError: operands could not be broadcast together with shapes (2,) (535,11) (2,)
+        # append various x and y
+        # images += x
+        # labels += y
+        images = x
+        labels = y
+        break
+
+    c = list(zip(images, labels))
+    random.shuffle(c)
+    x, y = zip(*c)
     X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=42)
 
+    # print(X_train)
+    # print(X_test)
+    # print(Y_train)
+    # print(Y_test)
 
     # plot_2d_pca(res_df)
     # plot_3d_pca(res_df)
