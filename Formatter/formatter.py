@@ -27,6 +27,6 @@ if __name__ == '__main__':
     experiment_II = "experiment_II_lpn.csv"
     target_experiment = experiment_II
     src_path = (windows_path if platform.system() == 'Windows' else linux_path) + target_experiment
-    target_path = "data/" + target_experiment
+    target_path = "../data/" + target_experiment
 
     format_dataset(src_path, target_path)
