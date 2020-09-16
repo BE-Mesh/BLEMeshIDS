@@ -6,9 +6,11 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
+from tensorflow import keras
 
 from DataLoader.data_loader import data_loader
 from DataParser.data_parser import preprocessing_phase
+import tensorflow as tf
 
 
 def clean_df(dataframe):
@@ -96,12 +98,12 @@ def plot_3d_pca(df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    labels_values = {"legit": 0}
+    labels_values = {"legit": 0, "bubu": 1}
     experiments = {"experiment_I_rpi.csv": 'legit', "experiment_II_lpn.csv": 'legit'}
 
-    images = np.empty(2)  # TODO cambiare
+    images: np.ndarray
     labels = []
-    for experiment in experiments.keys():
+    for i, experiment in enumerate(experiments.keys()):
         path = "data/" + experiment
         time_window = 1000000
 
@@ -114,25 +116,36 @@ if __name__ == '__main__':
         res_df.to_csv(processed_path, index=False)
 
         x, y = data_loader(processed_path, labels_values[experiments[experiment]])
-        # print(x)
+        images = x if i == 0 else np.concatenate((images, x))
+        labels += y
 
-        # TODO ValueError: operands could not be broadcast together with shapes (2,) (535,11) (2,)
-        # append various x and y
-        # images += x
-        # labels += y
-        images = x
-        labels = y
-        break
-
+    labels = np.array(labels)
     c = list(zip(images, labels))
     random.shuffle(c)
     x, y = zip(*c)
-    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+    x = np.array(x)
+    y = np.array(y)
 
-    # print(X_train)
-    # print(X_test)
-    # print(Y_train)
-    # print(Y_test)
+    # for scikit learn
+    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+    # for tensorflow
+    training_set = tf.data.Dataset.from_tensor_slices((X_train, Y_train))
+    test_set = tf.data.Dataset.from_tensor_slices((X_test, Y_test))
+
+    model = keras.Sequential([
+        keras.layers.Dense(32, activation='relu'),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.Dense(1)
+    ])
+
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+
+    training_set = training_set.batch(32).cache().repeat()
+    test_set = test_set.batch(32)
+
+    cb_es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=True)
+
+    model.fit(training_set, epochs=600, steps_per_epoch=15, validation_data=test_set, callbacks=[cb_es])
 
     # plot_2d_pca(res_df)
     # plot_3d_pca(res_df)
