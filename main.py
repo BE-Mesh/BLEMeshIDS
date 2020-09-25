@@ -35,10 +35,8 @@ if __name__ == '__main__':
     test_path = 'test.csv'
     time_window = 1000000
     res_df = preprocessing_phase(source_path=test_path, t_window=time_window)
-    processed_path = "data/preprocessed_" + test_path
-    res_df.to_csv(processed_path, index=False)
-    x, y = ''
-
+    x = res_df.to_numpy()
+    y = model.predict(x)  # mettere in batch la x
 
     # used to plot things
     # history_dict = json.load(open(history_path, 'r'))
