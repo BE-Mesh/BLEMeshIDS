@@ -22,11 +22,11 @@ def preprocessing_phase(source_path: str, t_window: int, clean_bcast: bool = Fal
             temp_dict = {"size": window.size, "rssi_mean": np.mean(window["rssi"]), "rssi_std": np.std(window["rssi"]),
                          "ttl_mean": np.mean(window["ttl"]), "ttl_std": np.std(window["ttl"])}
             unique, counts = np.unique(window["src"], return_counts=True)
-            pkts_src = list(dict(zip(unique, counts)).values())  # packtes per source
+            pkts_src = list(dict(zip(unique, counts)).values())  # packets per source
             temp_dict["src_mean"] = np.mean(pkts_src)
             temp_dict["src_std"] = np.std(pkts_src)
             unique, counts = np.unique(window["dest"], return_counts=True)
-            pkts_dst = list(dict(zip(unique, counts)).values())  # packtes per dest
+            pkts_dst = list(dict(zip(unique, counts)).values())  # packets per dest
             temp_dict["dest_mean"] = np.mean(pkts_dst)
             temp_dict["dest_std"] = np.std(pkts_dst)
             temp_dict["size_pkt_mean"] = np.mean(window["msglen"])
