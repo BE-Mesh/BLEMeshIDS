@@ -1,25 +1,61 @@
-import os
+import datetime
+
+
+def split_black_hole(path: str, hour: int, minute: int):
+    """
+    :param minute: minute of start of the attack in GMT
+    :param hour: hour of start of the attack in GMT
+    :type path: str
+    :type minute: int
+    :type hour: int
+    """
+    with open(path, 'r') as source:
+        with open('./data/black_hole.csv', 'w') as target_bh:
+            with open('./data/legit_from_bh.csv', 'w') as target_legit:
+                for line in source:
+                    arr = line.strip('\n').split(',')
+                    letter = arr.pop(1)
+                    if letter == 'N':
+                        timestamp = datetime.datetime.fromtimestamp(float(arr[0]) / 1e6, tz=datetime.timezone.utc)
+                        if int(str(timestamp.hour)) >= hour and int(str(timestamp.minute)) >= minute:
+                            target_bh.write(','.join(arr) + '\n')
+                        else:
+                            target_legit.write(','.join(arr) + '\n')
+
+
+def split_generic(path: str, out_filename: str):
+    """
+    :type out_filename: str
+    :type path: str
+    """
+    with open(path, 'r') as source:
+        with open('./data/' + out_filename, 'w') as target_legit:
+            for line in source:
+                arr = line.strip('\n').split(',')
+                letter = arr.pop(1)
+                if letter == 'N':
+                    target_legit.write(','.join(arr) + '\n')
+
+
+def split_legit(path: str):
+    """
+    :type path: str
+    """
+    return split_generic(path, './legit.csv')
+
+
+def split_grey_hole(path: str):
+    """
+    :type path: str
+    """
+    return split_generic(path, './grey_hole.csv')
+
 
 if __name__ == '__main__':
-    base_path = '/home/thecave3/dataset_ble_mesh/experiment_legit/PC2/results_1601289319.664947/'
+    path_bh = '/home/thecave3/dataset_ble_mesh/experiment_black_hole/PC1/results_1601462511.271308/ttyUSB2.csv'
+    path_legit = '/home/thecave3/dataset_ble_mesh/experiment_legit/PC2/results_1601289319.664947/ttyUSB0.csv'
+    # path_gh = '/home/thecave3/dataset_ble_mesh/experiment_grey_hole/'
 
-    with open(base_path + 'ttyUSB0.csv', 'r') as source:
-        with open('./ttyUSB0_N.csv', 'w') as target:
-            for line in source:
-                arr = line.split(',')
-                if arr[1] == 'N' and len(arr) == 11:
-                    newline = ''
-                    i = 0
-                    while i < 11:
-                        if i == 1:
-                            i += 1
-                            continue
-                        if i == 10:
-                            newline += arr[i]
-                        else:
-                            newline += arr[i] + ','
-                        i += 1
-                    print(newline)
-
-                    target.write(newline)
-                    # print(line)
+    split_black_hole(path_bh, 12, 11)
+    split_legit(path_legit)
+    # split_grey_hole(path_gh)
