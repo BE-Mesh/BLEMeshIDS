@@ -4,14 +4,75 @@
 
 import numpy as np
 import tensorflow as tf
-from lib.preproc import load_dataset
+from lib.preproc import load_dataset_folder
+from sklearn.utils import shuffle, compute_class_weight
+from sklearn.model_selection import train_test_split
+import datetime
 
 DATA_LEGIT_PATH = ''
 DATA_BH_PATH = ''
-WSIZE = int(1e5)
+WSIZE = int(2e6)
+BATCH_SIZE = 128
+EPOCHS = 3000
 
 LABELS = {'legit': 0, 'black_hole': 1, 'grey_hole': 2}
 
+
+def stack_data(X_lst: [np.array], y_lst: [np.array], onehot=True):
+    X = np.concatenate(X_lst, axis=0)
+    y = np.concatenate(y_lst, axis=0)
+    # Shuffle the dataset
+    X, y = shuffle(X, y, random_state=42)
+    if onehot is True:
+        y = tf.keras.utils.to_categorical(y, num_classes=2)
+    return X, y
+
+
+def generate_model_01(batch_size):
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(32, input_shape=(batch_size, 11), activation='relu'),
+        tf.keras.layers.Dropout(.2),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(.2),
+        tf.keras.layers.Dense(2, activation='softmax')
+    ])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), loss='categorical_crossentropy',
+                  metrics=['acc'])
+    return model
+
+
 if __name__ == '__main__':
-    x_l, y_l = load_dataset(DATA_LEGIT_PATH, LABELS['legit'], WSIZE)
+    X_lst, y_lst = load_dataset_folder('../data')
+    X, y = stack_data(X_lst, y_lst, onehot=True)
+    print(X.shape, y.shape)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=0.33, random_state=42)
+    # Convert to tf.data.Dataset
+    train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+    test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+
+    train_data = train_data.batch(BATCH_SIZE).repeat().cache()
+    test_data = test_data.batch(BATCH_SIZE)
+
+    model = generate_model_01(BATCH_SIZE)
+
+    # Compute class weights
+    class_weights = compute_class_weight('balanced', np.unique(np.argmax(y_train, axis=1)), np.argmax(y_train, axis=1))
+    print(class_weights)
+
+    # TensorBoard callback
+    log_dir = '../logs/fit/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+    cb_tb = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
+
+    training_history = model.fit(train_data, epochs=EPOCHS, validation_data=test_data, steps_per_epoch=15,
+                                 class_weight={0: class_weights[0], 1: class_weights[1]}, callbacks=[cb_tb])
+
+    # Store training history
+    np.savetxt('../logs/acc.txt', training_history.history['acc'])
+    np.savetxt('../logs/val_acc.txt', training_history.history['val_acc'])
+    np.savetxt('../logs/loss.txt', training_history.history['loss'])
+    np.savetxt('../logs/val_loss.txt', training_history.history['val_loss'])
+
+    model.save_weights('../logs/weights.h5')
+
     exit(0)

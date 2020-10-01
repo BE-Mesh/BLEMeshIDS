@@ -4,6 +4,7 @@ Handle preprocessing
 
 import pandas as pd
 import numpy as np
+import os
 
 DATA_COLS = ['timestamp', 'role', 'seq', 'net_idx', 'app_idx', 'src', 'dst', 'rssi', 'ttl', 'buf_len']
 
@@ -21,8 +22,9 @@ def generate_time_windows(data: pd.DataFrame, window_len: int) -> [pd.DataFrame]
     :param window_len: length of each time window, must be expressed in microseconds
     :return:
     """
-    min_time = data['time_window'].min()
-    data['time_window'] = np.floor((data['timestamp'] - min_time) / window_len)
+
+    min_time = data['timestamp'].min()
+    data['time_window'] = np.floor((data['timestamp'].astype(np.int) - min_time) / window_len)
     dfs = []
     for i in range(int(data['time_window'].max())):
         window = data.loc[data['time_window'] == i]
@@ -46,10 +48,10 @@ def compute_features(window: pd.DataFrame) -> np.array:
     # can be added average value change of seq field of packets with the same value of src field.
     # temp_dict['seq_mean'] = np.mean(window['seq'])
 
-    unique, counts = np.unique(window['dest'], return_counts=True)
+    unique, counts = np.unique(window['dst'], return_counts=True)
     pkts_dst = list(dict(zip(unique, counts)).values())  # packets per dest
-    temp_dict['dest_mean'] = np.mean(pkts_dst)
-    temp_dict['dest_std'] = np.std(pkts_dst)
+    temp_dict['dst_mean'] = np.mean(pkts_dst)
+    temp_dict['dst_std'] = np.std(pkts_dst)
     temp_dict['size_pkt_mean'] = np.mean(window['buf_len'])
     temp_dict['size_pkt_std'] = np.std(window['buf_len'])
 
@@ -57,18 +59,46 @@ def compute_features(window: pd.DataFrame) -> np.array:
 
 
 def preproc_data(file: str, window_len: int) -> np.array:
+    print('reading file...', end='')
     df = read_data(file)
+    print('done.')
+    print('generating time windows...', end='')
     twin_lst = generate_time_windows(df, window_len)
+    print('done.')
+    print('computing features...', end='')
     preproc_lst = [compute_features(x) for x in twin_lst]
+    print('done.')
     return np.array(preproc_lst)
 
 
-def load_dataset(file: str, label: int, window_len=int(1e3)) -> (np.array, np.array):
+def generate_dataset(file: str, label: int, window_len=int(1e6)) -> (np.array, np.array):
     X = preproc_data(file, window_len)
     y = np.array([label for _ in range(X.shape[0])])
     return X, y
 
 
+def load_dataset(file: str, label: int) -> (np.array, np.array):
+    X = np.loadtxt(file)
+    y = np.array([label for _ in range(X.shape[0])])
+    return X, y
+
+def load_dataset_folder(path: str, labels: [str]=None):
+    X_lst = []
+    y_lst = []
+    if labels is None:
+        labels = ['legit', 'black_hole', 'grey_hole']
+    for i, label in enumerate(labels):
+        data_path = os.path.join(path, label)
+        for fname in os.listdir(data_path):
+            if fname.endswith('.csv'):
+                X, y = load_dataset(
+                    os.path.join(data_path, fname), i)
+                X_lst.append(X)
+                y_lst.append(y)
+    return X_lst, y_lst
+
+
 if __name__ == '__main__':
-    X, y = load_dataset('test.csv', label=0, window_len=1000)
-    print(X.shape, y.shape)
+    #X, y = generate_dataset('test.csv', label=0, window_len=int(1e6))
+    #print(X.shape, y.shape)
+    X_lst, y_lst = load_dataset_folder('../data')
