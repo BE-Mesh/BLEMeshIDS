@@ -14,18 +14,46 @@ def read_data(file: str) -> pd.DataFrame:
 
 def generate_time_windows(data: pd.DataFrame, window_len: int) -> [pd.DataFrame]:
     """generate_time_windows
-    Generates the list of time windows of dimension window_len (expressed in microseconds).
+    Generates the list of time windows of dimension window_len.
+    :type window_len: int
+    :type data: pd.DataFrame
+    :param data:
+    :param window_len: length of each time window, must be expressed in microseconds
+    :return:
     """
-    # TODO
-    return []
+    min_time = data['time_window'].min()
+    data['time_window'] = np.floor((data['timestamp'] - min_time) / window_len)
+    dfs = []
+    for i in range(int(data['time_window'].max())):
+        window = data.loc[data['time_window'] == i]
+        if not window.empty:
+            dfs.append(window)
+
+    return dfs
 
 
-def compute_features(data: pd.DataFrame) -> np.array:
+def compute_features(window: pd.DataFrame) -> np.array:
     """compute_features
     Take a time window as input and output the temporal analysis (TA) features as a numpy array
     """
-    # TODO
-    return data.to_numpy()
+    temp_dict = {'size': window.size, 'rssi_mean': np.mean(window['rssi']), 'rssi_std': np.std(window['rssi']),
+                 'ttl_mean': np.mean(window['ttl']), 'ttl_std': np.std(window['ttl'])}
+    unique, counts = np.unique(window['src'], return_counts=True)
+    pkts_src = list(dict(zip(unique, counts)).values())  # packets per source
+    temp_dict['src_mean'] = np.mean(pkts_src)
+    temp_dict['src_std'] = np.std(pkts_src)
+
+    # can be added average value change of seq field of packets with the same value of src field.
+    # temp_dict['seq_mean'] = np.mean(window['seq'])
+
+    unique, counts = np.unique(window['dest'], return_counts=True)
+    pkts_dst = list(dict(zip(unique, counts)).values())  # packets per dest
+    temp_dict['dest_mean'] = np.mean(pkts_dst)
+    temp_dict['dest_std'] = np.std(pkts_dst)
+    temp_dict['size_pkt_mean'] = np.mean(window['buf_len'])
+    temp_dict['size_pkt_std'] = np.std(window['buf_len'])
+
+    return np.array(list(temp_dict.values()))
 
 
 def preproc_data(file: str, window_len: int) -> np.array:
