@@ -10,8 +10,8 @@ def split_black_hole(path: str, hour: int, minute: int):
     :type hour: int
     """
     with open(path, 'r') as source:
-        with open('./data/black_hole.csv', 'w') as target_bh:
-            with open('./data/legit_from_bh.csv', 'w') as target_legit:
+        with open('../data/black_hole.csv', 'w') as target_bh:
+            with open('../data/legit_from_bh.csv', 'w') as target_legit:
                 for line in source:
                     arr = line.strip('\n').split(',')
                     if arr[-1] == '0':
@@ -55,7 +55,7 @@ def split_grey_hole(path: str):
     return split_generic(path, './grey_hole.csv')
 
 
-if __name__ == '__main__':
+def split():
     path_bh = '/home/thecave3/dataset_ble_mesh/experiment_black_hole/PC1/results_1601462511.271308/ttyUSB2.csv'
     path_legit = '/home/thecave3/dataset_ble_mesh/experiment_legit/PC2/results_1601289319.664947/ttyUSB0.csv'
     path_gh = '/home/thecave3/dataset_ble_mesh/experiment_grey_hole/PC0/results_1601635422.203449/ttyUSB2.csv'
@@ -63,3 +63,7 @@ if __name__ == '__main__':
     split_black_hole(path_bh, 12, 11)
     split_legit(path_legit)
     split_grey_hole(path_gh)
+
+
+if __name__ == '__main__':
+    split()

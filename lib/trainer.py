@@ -42,12 +42,11 @@ def generate_model_01(batch_size, num_classes=2):
     return model
 
 
-if __name__ == '__main__':
+def train():
     X_lst, y_lst = load_dataset_folder('../data')
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=NUM_CLASSES)
     print(X.shape, y.shape)
-    X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=0.33, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
     # Convert to tf.data.Dataset
     train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
@@ -77,4 +76,7 @@ if __name__ == '__main__':
 
     model.save_weights('../logs/weights.h5')
 
+
+if __name__ == '__main__':
+    train()
     exit(0)

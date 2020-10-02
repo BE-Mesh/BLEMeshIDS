@@ -18,9 +18,14 @@ LABEL_LST = ['black_hole', 'grey_hole']"""
 
 OUTPUT_DATASET_PATH = '../data/'
 
-if __name__ == '__main__':
+
+def generate_dataset(window_size: int = WSIZE):
     for i, data_path in enumerate(DATA_LST):
-        x = preproc_data(data_path, WSIZE)
+        x = preproc_data(data_path, window_size)
         base_path = join(OUTPUT_DATASET_PATH, LABEL_LST[i])
         np.savetxt(join(base_path, '0.csv'), x)
+
+
+if __name__ == '__main__':
+    generate_dataset()
     exit(0)

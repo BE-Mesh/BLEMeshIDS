@@ -1,8 +1,9 @@
 from DataParser.data_parser import preprocessing_phase
-from Trainer import trainer
 import models.models as models
-import json
-
+import lib.splitter as splitter
+import lib.dataset_gen as generator
+import lib.trainer as trainer
+import lib.plotter as plotter
 
 def clean_df(dataframe):
     del dataframe["experiment"]
@@ -17,7 +18,7 @@ def save_cleaned_copy(dataframe):
     dataframe.to_csv("experiment_I.csv", encoding='utf-8')
 
 
-if __name__ == '__main__':
+def old():
     labels_values = {"legit": 0, "bubu": 1}
     experiments = {"experiment_I_rpi.csv": 'legit', "experiment_II_lpn.csv": 'legit'}
     history_path = 'data/history'
@@ -40,3 +41,12 @@ if __name__ == '__main__':
 
     # used to plot things
     # history_dict = json.load(open(history_path, 'r'))
+
+
+if __name__ == '__main__':
+    i = 0
+    splitter.split()
+    generator.generate_dataset(window_size=i)
+    trainer.train()
+    plotter.plot(window_size=int(i/1e6))
+
