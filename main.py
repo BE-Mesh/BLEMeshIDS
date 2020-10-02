@@ -5,6 +5,7 @@ import lib.dataset_gen as generator
 import lib.trainer as trainer
 import lib.plotter as plotter
 
+
 def clean_df(dataframe):
     del dataframe["experiment"]
     del dataframe["setting"]
@@ -44,9 +45,8 @@ def old():
 
 
 if __name__ == '__main__':
-    i = 0
-    splitter.split()
-    generator.generate_dataset(window_size=i)
-    trainer.train()
-    plotter.plot(window_size=int(i/1e6))
-
+    for i in range(1, 11):
+        splitter.split()
+        generator.generate_dataset(window_size=int(i * 1e6))
+        trainer.train()
+        plotter.plot(window_size=i)
