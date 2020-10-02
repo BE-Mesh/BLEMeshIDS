@@ -1,4 +1,5 @@
 import datetime
+import platform
 
 
 def split_black_hole(path: str, hour: int, minute: int):
@@ -10,8 +11,8 @@ def split_black_hole(path: str, hour: int, minute: int):
     :type hour: int
     """
     with open(path, 'r') as source:
-        with open('../data/black_hole.csv', 'w') as target_bh:
-            with open('../data/legit_from_bh.csv', 'w') as target_legit:
+        with open('data/black_hole.csv', 'w') as target_bh:
+            with open('data/legit_from_bh.csv', 'w') as target_legit:
                 for line in source:
                     arr = line.strip('\n').split(',')
                     if arr[-1] == '0':
@@ -31,7 +32,7 @@ def split_generic(path: str, out_filename: str):
     :type path: str
     """
     with open(path, 'r') as source:
-        with open('./data/' + out_filename, 'w') as target_legit:
+        with open('data/' + out_filename, 'w') as target_legit:
             for line in source:
                 arr = line.strip('\n').split(',')
                 if arr[-1] == '0':
@@ -56,9 +57,12 @@ def split_grey_hole(path: str):
 
 
 def split():
-    path_bh = '/home/thecave3/dataset_ble_mesh/experiment_black_hole/PC1/results_1601462511.271308/ttyUSB2.csv'
-    path_legit = '/home/thecave3/dataset_ble_mesh/experiment_legit/PC2/results_1601289319.664947/ttyUSB0.csv'
-    path_gh = '/home/thecave3/dataset_ble_mesh/experiment_grey_hole/PC0/results_1601635422.203449/ttyUSB2.csv'
+    linux_path = "/home/thecave3/dataset_ble_mesh/"
+    windows_path = "A:\\Download\\Tesi\\dataset_ble_mesh\\"
+    sys_path = (windows_path if platform.system() == 'Windows' else linux_path)
+    path_bh = sys_path + 'experiment_black_hole/PC1/results_1601462511.271308/ttyUSB2.csv'
+    path_legit = sys_path + 'experiment_legit/PC2/results_1601289319.664947/ttyUSB0.csv'
+    path_gh = sys_path + 'experiment_grey_hole/PC0/results_1601635422.203449/ttyUSB2.csv'
 
     split_black_hole(path_bh, 12, 11)
     split_legit(path_legit)
