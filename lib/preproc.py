@@ -24,7 +24,7 @@ def generate_time_windows(data: pd.DataFrame, window_len: int) -> [pd.DataFrame]
     """
 
     min_time = data['timestamp'].min()
-    data['time_window'] = np.floor((data['timestamp'].astype(np.int) - min_time) / window_len)
+    data['time_window'] = np.floor((data['timestamp'].astype(np.int64) - min_time) / window_len)
     dfs = []
     for i in range(int(data['time_window'].max())):
         window = data.loc[data['time_window'] == i]
@@ -54,7 +54,6 @@ def compute_features(window: pd.DataFrame) -> np.array:
     temp_dict['dst_std'] = np.std(pkts_dst)
     temp_dict['size_pkt_mean'] = np.mean(window['buf_len'])
     temp_dict['size_pkt_std'] = np.std(window['buf_len'])
-
     return np.array(list(temp_dict.values()))
 
 

@@ -20,6 +20,9 @@ NUM_CLASSES = 3
 
 LABELS = {'legit': 0, 'black_hole': 1, 'grey_hole': 2}
 
+SAVE_LOGS_DIR = 'logs/'
+DATASET_DIR = 'data/'
+
 
 def stack_data(X_lst: [np.array], y_lst: [np.array], onehot=True, num_classes=2):
     X = np.concatenate(X_lst, axis=0)
@@ -45,7 +48,7 @@ def generate_model_01(batch_size, num_classes=2):
 
 
 def train():
-    X_lst, y_lst = load_dataset_folder('../data')
+    X_lst, y_lst = load_dataset_folder(DATASET_DIR)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=NUM_CLASSES)
     normalized_X = normalize(X, axis=1, norm='l2')
     print(X.shape, y.shape)
@@ -64,7 +67,7 @@ def train():
     print(class_weights)
 
     # TensorBoard callback
-    log_dir = '../logs/fit/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+    log_dir = SAVE_LOGS_DIR + 'fit/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     cb_tb = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
     training_history = model.fit(train_data, epochs=EPOCHS, validation_data=test_data, steps_per_epoch=15,
@@ -72,12 +75,12 @@ def train():
                                  callbacks=[cb_tb])
 
     # Store training history
-    np.savetxt('../logs/acc.txt', training_history.history['acc'])
-    np.savetxt('../logs/val_acc.txt', training_history.history['val_acc'])
-    np.savetxt('../logs/loss.txt', training_history.history['loss'])
-    np.savetxt('../logs/val_loss.txt', training_history.history['val_loss'])
+    np.savetxt(SAVE_LOGS_DIR + 'acc.txt', training_history.history['acc'])
+    np.savetxt(SAVE_LOGS_DIR + 'val_acc.txt', training_history.history['val_acc'])
+    np.savetxt(SAVE_LOGS_DIR + 'loss.txt', training_history.history['loss'])
+    np.savetxt(SAVE_LOGS_DIR + 'val_loss.txt', training_history.history['val_loss'])
 
-    model.save_weights('../logs/weights.h5')
+    model.save_weights(SAVE_LOGS_DIR + 'weights.h5')
 
 
 if __name__ == '__main__':

@@ -64,9 +64,15 @@ def split():
     path_legit = sys_path + 'experiment_legit/PC2/results_1601289319.664947/ttyUSB0.csv'
     path_gh = sys_path + 'experiment_grey_hole/PC0/results_1601635422.203449/ttyUSB2.csv'
 
+    print('Start splitting bh... ', end='')
     split_black_hole(path_bh, 12, 11)
+    print('done')
+    print('Start splitting legit... ', end='')
     split_legit(path_legit)
+    print('done')
+    print('Start splitting gh... ', end='')
     split_grey_hole(path_gh)
+    print('done')
 
 
 if __name__ == '__main__':

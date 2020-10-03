@@ -26,8 +26,8 @@ def old():
     model_path = 'data/model.h5'
     model_weights_path = 'data/model_checkpoint'
 
-    trainer.train(experiments, labels_values, history_path, models.create_model("binary"), model_path,
-                  model_weights_path)
+    # trainer.train(experiments, labels_values, history_path, models.create_model("binary"), model_path,
+    #               model_weights_path)
 
     # Create a new model instance
     model = models.create_model("binary")
@@ -45,8 +45,12 @@ def old():
 
 
 if __name__ == '__main__':
-    for i in range(1, 11):
+    for i in range(1, 10, 2):
+        print(f'Starting window size of {i} seconds')
         splitter.split()
         generator.generate_dataset(window_size=int(i * 1e6))
         trainer.train()
         plotter.plot(window_size=i)
+        print(f'Done with window size of {i} seconds')
+
+    print('Finished')

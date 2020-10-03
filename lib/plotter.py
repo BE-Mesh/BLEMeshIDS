@@ -17,12 +17,14 @@ import pandas as pd
 
 WSIZE = 2
 
+IMAGES_DIR = 'images/'
+
 
 def plot_histogram(y: np.array, num_classes=3, window_size: int = WSIZE):
     fig, ax = plt.subplots()
     ax.hist(y, bins=num_classes)
     plt.title(f'Classes balance (time window: {window_size} s)')
-    plt.savefig(f'../images/{window_size}/hist_classes_balance.png')
+    plt.savefig(f'{IMAGES_DIR}{window_size}/hist_classes_balance.png')
 
 
 def plot_2d_pca(x: np.array, y: np.array, window_size: int = WSIZE):
@@ -35,7 +37,7 @@ def plot_2d_pca(x: np.array, y: np.array, window_size: int = WSIZE):
     ax.set_xlabel('comp_1')
     ax.set_ylabel('comp_2')
     ax.set_title(f'PCA (time window: {window_size} s)')
-    plt.savefig(f'../images/{window_size}/pca.png')
+    plt.savefig(f'{IMAGES_DIR}{window_size}/pca.png')
     return ax
 
 
@@ -69,7 +71,7 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     plt.ylabel('True Positive Rate')
     plt.title(f'Receiver operating characteristic (time window: {window_size} s)')
     plt.legend(loc="lower right")
-    plt.savefig(f'../images/{window_size}/roc.png')
+    plt.savefig(f'{IMAGES_DIR}{window_size}/roc.png')
     return ax
 
 
@@ -96,7 +98,7 @@ def plot_training_hist(path: str, window_size: int):
     axs[1].legend()
 
     plt.grid(True, which='both')
-    plt.savefig(f'../images/{window_size}/training_hist.png')
+    plt.savefig(f'{IMAGES_DIR}{window_size}/training_hist.png')
     return axs
 
 
@@ -110,25 +112,32 @@ def plot_confusion_mat(model, data: tf.data.Dataset, num_classes=3, window_size:
         cm += tcm
     print('row = what they are, col = what the classifier predicted')
     print(cm)
-    pretty_plot_confusion_matrix(pd.DataFrame(cm), window_size=window_size)
+    pretty_plot_confusion_matrix(pd.DataFrame(cm), window_size=window_size, save_directory=IMAGES_DIR)
 
     return ax
 
 
-DATA_LEGIT_PATH = '../data/legit/0.csv'
-DATA_BH_PATH = '../data/black_hole/0.csv'
+LOGS_DIR = 'logs/'
+DATA_DIR = 'data/'
+DATA_LEGIT_PATH = f'{DATA_DIR}legit/0.csv'
+DATA_BH_PATH = f'{DATA_DIR}black_hole/0.csv'
 
 
 def plot(window_size: int = WSIZE):
-    path = f'../images/{window_size}'
+    print('Start folder creation... ', end='')
+    path = f'{IMAGES_DIR}{window_size}'
+    if not os.path.exists(path=IMAGES_DIR):
+        os.mkdir(path=IMAGES_DIR)
     if not os.path.exists(path=path):
         os.mkdir(path=path)
-    X_lst, y_lst = load_dataset_folder('../data/')
+    print('done')
+    print('Start loading of model... ', end='')
+    X_lst, y_lst = load_dataset_folder(DATA_DIR)
     X, y = stack_data(X_lst, y_lst, onehot=False, num_classes=3)
-    plot_training_hist('../logs', window_size=window_size)
+    plot_training_hist(LOGS_DIR, window_size=window_size)
     # onehot=False if print PCA and histogram
     plot_histogram(y, window_size=window_size)
-    plot_2d_pca(X, y)
+    plot_2d_pca(X, y, window_size=window_size)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
@@ -139,9 +148,10 @@ def plot(window_size: int = WSIZE):
     train_data = train_data.batch(BATCH_SIZE).repeat().cache()
     test_data = test_data.batch(BATCH_SIZE)
     model = generate_model_01(BATCH_SIZE, num_classes=3)
-    model.load_weights('../logs/weights.h5')
-
-    plot_training_hist('../logs/', window_size=window_size)
+    model.load_weights(f'{LOGS_DIR}weights.h5')
+    print('done')
+    print('Generating plots...')
+    plot_training_hist(LOGS_DIR, window_size=window_size)
     plot_roc(model, test_data, window_size=window_size)
     plot_confusion_mat(model, test_data, window_size=window_size)
 

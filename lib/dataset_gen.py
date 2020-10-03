@@ -5,9 +5,9 @@ import numpy as np
 from os.path import join
 from lib.preproc import preproc_data
 
-DATA_LEGIT_PATH = '../data/legit.csv'
-DATA_BH_PATH = '../data/black_hole.csv'
-DATA_GH_PATH = '../data/grey_hole.csv'
+DATA_LEGIT_PATH = 'data/legit.csv'
+DATA_BH_PATH = 'data/black_hole.csv'
+DATA_GH_PATH = 'data/grey_hole.csv'
 WSIZE = int(1e6)
 
 DATA_LST = [DATA_LEGIT_PATH, DATA_BH_PATH, DATA_GH_PATH]
@@ -16,7 +16,7 @@ LABEL_LST = ['legit', 'black_hole', 'grey_hole']
 """DATA_LST = [DATA_BH_PATH, DATA_GH_PATH]
 LABEL_LST = ['black_hole', 'grey_hole']"""
 
-OUTPUT_DATASET_PATH = '../data/'
+OUTPUT_DATASET_PATH = 'data/'
 
 
 def generate_dataset(window_size: int = WSIZE):
