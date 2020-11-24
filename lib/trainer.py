@@ -57,7 +57,7 @@ def train():
     train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
 
-    train_data = train_data.batch(BATCH_SIZE).repeat().cache()
+    train_data = train_data.batch(BATCH_SIZE).cache().repeat()
     test_data = test_data.batch(BATCH_SIZE)
 
     model = generate_model_01(BATCH_SIZE, num_classes=NUM_CLASSES)
@@ -69,10 +69,11 @@ def train():
     # TensorBoard callback
     log_dir = SAVE_LOGS_DIR + 'fit/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     cb_tb = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
+    cb_es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=200, restore_best_weights=True, verbose=True)
 
     training_history = model.fit(train_data, epochs=EPOCHS, validation_data=test_data, steps_per_epoch=15,
                                  class_weight={0: class_weights[0], 1: class_weights[1], 2: class_weights[2]},
-                                 callbacks=[cb_tb])
+                                 callbacks=[cb_tb,cb_es])
 
     # Store training history
     np.savetxt(SAVE_LOGS_DIR + 'acc.txt', training_history.history['acc'])
