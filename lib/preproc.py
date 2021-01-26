@@ -10,6 +10,11 @@ DATA_COLS = ['timestamp', 'role', 'seq', 'net_idx', 'app_idx', 'src', 'dst', 'rs
 
 
 def read_data(file: str) -> pd.DataFrame:
+    """
+    Read a file in CSV format and returns the associated DataFrame
+    :param file: string pointing to the target file
+    :return: the file as a DataFrame
+    """
     return pd.read_csv(file, names=DATA_COLS, engine='python')
 
 
@@ -18,25 +23,31 @@ def generate_time_windows(data: pd.DataFrame, window_len: int) -> [pd.DataFrame]
     Generates the list of time windows of dimension window_len.
     :type window_len: int
     :type data: pd.DataFrame
-    :param data:
+    :param data: The data object in form of DataFrame
     :param window_len: length of each time window, must be expressed in microseconds
-    :return:
+    :return: List of DataFrame(s) divided by time windows
     """
 
     min_time = data['timestamp'].min()
+    # Alter the time_window column in the dataset by applying a discrete transform that subdivides each window with a
+    # different index
     data['time_window'] = np.floor((data['timestamp'].astype(np.int64) - min_time) / window_len)
+    # Time windows list
     dfs = []
     for i in range(int(data['time_window'].max())):
         window = data.loc[data['time_window'] == i]
         if not window.empty:
             dfs.append(window)
-
     return dfs
 
 
 def compute_features(window: pd.DataFrame) -> np.array:
-    """compute_features
-    Take a time window as input and output the temporal analysis (TA) features as a numpy array
+    """
+    Take a time window as input and output the temporal analysis (TA) features as a numpy array.
+    The following features are extracted:
+    (size, rssi_mean, rssi_std, ttl_mean, ttl_std, src_mean, src_std, dst_mean, dst_std, size_pkt_mean, size_pkt_std)
+    :param window: DataFrame representing a time window
+    :return: Numpy array containing extracted features
     """
     temp_dict = {'size': window.size, 'rssi_mean': np.mean(window['rssi']), 'rssi_std': np.std(window['rssi']),
                  'ttl_mean': np.mean(window['ttl']), 'ttl_std': np.std(window['ttl'])}
@@ -57,16 +68,10 @@ def compute_features(window: pd.DataFrame) -> np.array:
     return np.array(list(temp_dict.values()))
 
 
-def preproc_data(file: str, window_len: int) -> np.array:
-    print('reading file...', end='')
+def preproc_data(file: str, window_len: int, verbose=False) -> np.array:
     df = read_data(file)
-    print('done.')
-    print('generating time windows...', end='')
     twin_lst = generate_time_windows(df, window_len)
-    print('done.')
-    print('computing features...', end='')
     preproc_lst = [compute_features(x) for x in twin_lst]
-    print('done.')
     return np.array(preproc_lst)
 
 
@@ -81,7 +86,8 @@ def load_dataset(file: str, label: int) -> (np.array, np.array):
     y = np.array([label for _ in range(X.shape[0])])
     return X, y
 
-def load_dataset_folder(path: str, labels: [str]=None):
+
+def load_dataset_folder(path: str, labels: [str] = None):
     X_lst = []
     y_lst = []
     if labels is None:
@@ -98,6 +104,6 @@ def load_dataset_folder(path: str, labels: [str]=None):
 
 
 if __name__ == '__main__':
-    #X, y = generate_dataset('test.csv', label=0, window_len=int(1e6))
-    #print(X.shape, y.shape)
+    # X, y = generate_dataset('test.csv', label=0, window_len=int(1e6))
+    # print(X.shape, y.shape)
     X_lst, y_lst = load_dataset_folder('../data')

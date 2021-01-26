@@ -4,7 +4,7 @@
 
 import numpy as np
 import tensorflow as tf
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, StandardScaler
 
 from lib.preproc import load_dataset_folder
 from sklearn.utils import shuffle, compute_class_weight
@@ -64,7 +64,6 @@ def train():
 
     # Compute class weights
     class_weights = compute_class_weight('balanced', np.unique(np.argmax(y_train, axis=1)), np.argmax(y_train, axis=1))
-    print(class_weights)
 
     # TensorBoard callback
     log_dir = SAVE_LOGS_DIR + 'fit/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
