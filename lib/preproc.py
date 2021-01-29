@@ -6,7 +6,18 @@ import pandas as pd
 import numpy as np
 import os
 
-DATA_COLS = ['timestamp', 'role', 'seq', 'net_idx', 'app_idx', 'src', 'dst', 'rssi', 'ttl', 'buf_len']
+DATA_COLS = ['timestamp',
+             'N',
+             'role',
+             'seq',
+             'net_idx',
+             'app_idx',
+             'src',
+             'dst',
+             'rssi',
+             'ttl',
+             'buf_len',
+             'zeroes']
 
 
 def read_data(file: str) -> pd.DataFrame:
@@ -70,6 +81,7 @@ def compute_features(window: pd.DataFrame) -> np.array:
 
 def preproc_data(file: str, window_len: int, verbose=False) -> np.array:
     df = read_data(file)
+    print(df)
     twin_lst = generate_time_windows(df, window_len)
     preproc_lst = [compute_features(x) for x in twin_lst]
     return np.array(preproc_lst)
