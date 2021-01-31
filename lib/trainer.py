@@ -6,10 +6,11 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import normalize, StandardScaler
 
-from lib.preproc import load_dataset_folder
+from lib.preproc import load_dataset_folder, load
 from sklearn.utils import shuffle, compute_class_weight
 from sklearn.model_selection import train_test_split
 import datetime
+import logging
 
 DATA_LEGIT_PATH = ''
 DATA_BH_PATH = ''
@@ -21,7 +22,7 @@ NUM_CLASSES = 3
 LABELS = {'legit': 0, 'black_hole': 1, 'grey_hole': 2}
 
 SAVE_LOGS_DIR = 'logs/'
-DATASET_DIR = 'data/'
+DATASET_DIR = 'data/proc'
 
 
 def stack_data(X_lst: [np.array], y_lst: [np.array], onehot=True, num_classes=2):
@@ -48,10 +49,12 @@ def generate_model_01(batch_size, num_classes=2):
 
 
 def train():
-    X_lst, y_lst = load_dataset_folder(DATASET_DIR)
+    #X_lst, y_lst = load_dataset_folder(DATASET_DIR)
+    X_lst, y_lst = load(DATASET_DIR)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=NUM_CLASSES)
     normalized_X = normalize(X, axis=1, norm='l2')
     print(X.shape, y.shape)
+    logging.debug(f'X shape: {X.shape}\ty shape: {y.shape}')
     X_train, X_test, y_train, y_test = train_test_split(normalized_X, y, test_size=0.33, random_state=42)
     # Convert to tf.data.Dataset
     train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))

@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.model_selection import train_test_split
 
-from lib.preproc import load_dataset_folder
+from lib.preproc import load_dataset_folder, load
 from lib.print_confusion_matrix import pretty_plot_confusion_matrix
 from lib.trainer import stack_data, generate_model_01, BATCH_SIZE
 import os
@@ -118,7 +118,7 @@ def plot_confusion_mat(model, data: tf.data.Dataset, num_classes=3, window_size:
 
 
 LOGS_DIR = 'logs/'
-DATA_DIR = 'data/'
+DATA_DIR = 'data/proc'
 DATA_LEGIT_PATH = f'{DATA_DIR}legit/0.csv'
 DATA_BH_PATH = f'{DATA_DIR}black_hole/0.csv'
 
@@ -132,7 +132,7 @@ def plot(window_size: int = WSIZE):
         os.mkdir(path=path)
     print('done')
     print('Start loading of model... ', end='')
-    X_lst, y_lst = load_dataset_folder(DATA_DIR)
+    X_lst, y_lst = load(DATA_DIR)
     X, y = stack_data(X_lst, y_lst, onehot=False, num_classes=3)
     plot_training_hist(LOGS_DIR, window_size=window_size)
     # onehot=False if print PCA and histogram

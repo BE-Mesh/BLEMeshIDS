@@ -5,6 +5,10 @@ Handle preprocessing
 import pandas as pd
 import numpy as np
 import os
+import logging
+
+LABEL_LST = ['legit', 'black_hole', 'gray_hole']
+
 
 DATA_COLS = ['timestamp',
              'N',
@@ -81,7 +85,6 @@ def compute_features(window: pd.DataFrame) -> np.array:
 
 def preproc_data(file: str, window_len: int, verbose=False) -> np.array:
     df = read_data(file)
-    print(df)
     twin_lst = generate_time_windows(df, window_len)
     preproc_lst = [compute_features(x) for x in twin_lst]
     return np.array(preproc_lst)
@@ -103,7 +106,7 @@ def load_dataset_folder(path: str, labels: [str] = None):
     X_lst = []
     y_lst = []
     if labels is None:
-        labels = ['legit', 'black_hole', 'grey_hole']
+        labels = ['legit', 'black_hole', 'gray_hole']
     for i, label in enumerate(labels):
         data_path = os.path.join(path, label)
         for fname in os.listdir(data_path):
@@ -115,7 +118,24 @@ def load_dataset_folder(path: str, labels: [str] = None):
     return X_lst, y_lst
 
 
+def load(path: str, labels: [str] = None) -> ([np.array], [np.array]):
+    X_lst = []
+    y_lst = []
+    if labels is None:
+        logging.warning('No labels passed. Using default')
+        labels = LABEL_LST
+    for i, label in enumerate(labels):
+        data_path = os.path.join(path, label)
+        for fname in os.listdir(data_path):
+            X, y = load_dataset(os.path.join(data_path, fname), i)
+            X_lst.append(X)
+            y_lst.append(y)
+    return X_lst, y_lst
+
+
 if __name__ == '__main__':
     # X, y = generate_dataset('test.csv', label=0, window_len=int(1e6))
     # print(X.shape, y.shape)
-    X_lst, y_lst = load_dataset_folder('../data')
+    # TODO(FIX new file system)
+    # X_lst, y_lst = load_dataset_folder('../data')
+    exit(0)
