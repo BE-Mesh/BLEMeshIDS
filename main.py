@@ -28,7 +28,7 @@ WINDOW_LEN = 10  # s
 if __name__ == '__main__':
     logging.info(f'Executing training with window length: {WINDOW_LEN} seconds')
     generator.generate_dataset('data/raw', 'data/proc', window_size=int(WINDOW_LEN * 1e6))
-    #trainer.train()
+    trainer.train()
     plotter.plot(window_size=WINDOW_LEN)
     """for i in range(1, 10, 2):
         print(f'Starting window size of {i} seconds')
