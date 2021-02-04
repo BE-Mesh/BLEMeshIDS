@@ -8,6 +8,7 @@ from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import normalize
 
 from lib.preproc import load_dataset_folder, load
 from lib.print_confusion_matrix import pretty_plot_confusion_matrix
@@ -47,18 +48,21 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    # todo inserire predict_proba
+    # todo(Fixed) inserire predict_proba
     #   inserendo adesso predict_proba vengono (0. e 1.)
     #   questa cosa altera completamente i dati della roc.
     #   Controllare i seguenti link:
     #   https://stackoverflow.com/questions/45011328/predict-proba-does-not-output-probability
     #   https://machinelearningmastery.com/how-to-make-classification-and-regression-predictions-for-deep-learning-models-in-keras/
+    #
     for x_test, y_test in data.take(2):
-        y_pred = np.argmax(model.predict(x_test), axis=1)
+        pred = model.predict(x_test)
+        y_pred = pred[:, 1] + pred[:, 2]
+        #y_pred = np.argmax(model.predict(x_test), axis=1)
     y_test = np.argmax(y_test, axis=1)
 
-    y_test = (y_test >= 1).astype(int)
-    y_pred = (y_pred >= 1).astype(int)
+    y_test = (y_test >= 1).astype(float)
+    #y_pred = (y_pred >= 1).astype(int)
 
     for i in range(num_classes):
         fpr[i], tpr[i], _ = roc_curve(y_test, y_pred)
@@ -173,6 +177,7 @@ def plot(window_size: int = WSIZE):
     plot_histogram(y, window_size=window_size)
     plot_2d_pca(X, y, window_size=window_size)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=3)
+    X = normalize(X, axis=1, norm='l2')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
     # Convert to tf.data.Dataset
@@ -180,7 +185,7 @@ def plot(window_size: int = WSIZE):
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
 
     train_data = train_data.batch(BATCH_SIZE).repeat().cache()
-    test_data = test_data.batch(BATCH_SIZE)
+    test_data = test_data.batch(BATCH_SIZE).repeat()
     model = generate_model_01(BATCH_SIZE, num_classes=3)
     model.load_weights(f'{LOGS_DIR}weights.h5')
     print('done')
