@@ -4,6 +4,7 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
+from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.model_selection import train_test_split
@@ -46,6 +47,12 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
+    # todo inserire predict_proba
+    #   inserendo adesso predict_proba vengono (0. e 1.)
+    #   questa cosa altera completamente i dati della roc.
+    #   Controllare i seguenti link:
+    #   https://stackoverflow.com/questions/45011328/predict-proba-does-not-output-probability
+    #   https://machinelearningmastery.com/how-to-make-classification-and-regression-predictions-for-deep-learning-models-in-keras/
     for x_test, y_test in data.take(2):
         y_pred = np.argmax(model.predict(x_test), axis=1)
     y_test = np.argmax(y_test, axis=1)
@@ -61,9 +68,36 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_pred.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(num_classes)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(num_classes):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= num_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    # Plot all ROC curves
+    plt.figure()
+    plt.plot(fpr["micro"], tpr["micro"],
+             label='micro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["micro"]),
+             color='deeppink', linestyle=':', linewidth=4)
+
+    plt.plot(fpr["macro"], tpr["macro"],
+             label='macro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["macro"]),
+             color='lime', linestyle=':', linewidth=4)
+
     lw = 2
-    plt.plot(fpr[2], tpr[2], color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
+    plt.plot(fpr[0], tpr[0], color='darkorange',
+             lw=lw, label='ROC curve 0 (area = %0.2f)' % roc_auc[0])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
