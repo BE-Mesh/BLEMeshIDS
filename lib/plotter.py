@@ -2,20 +2,20 @@
 
 """
 
+import os
+
 import numpy as np
+import pandas as pd
+import tensorflow as tf
 from matplotlib import pyplot as plt
-from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import normalize
 
-from lib.preproc import load_dataset_folder, load
+from lib.preproc import load
 from lib.print_confusion_matrix import pretty_plot_confusion_matrix
 from lib.trainer import stack_data, generate_model_01, BATCH_SIZE
-import os
-import tensorflow as tf
-import pandas as pd
 
 WSIZE = 2
 
@@ -48,21 +48,14 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    # todo(Fixed) inserire predict_proba
-    #   inserendo adesso predict_proba vengono (0. e 1.)
-    #   questa cosa altera completamente i dati della roc.
-    #   Controllare i seguenti link:
-    #   https://stackoverflow.com/questions/45011328/predict-proba-does-not-output-probability
-    #   https://machinelearningmastery.com/how-to-make-classification-and-regression-predictions-for-deep-learning-models-in-keras/
-    #
     for x_test, y_test in data.take(2):
         pred = model.predict(x_test)
         y_pred = pred[:, 1] + pred[:, 2]
-        #y_pred = np.argmax(model.predict(x_test), axis=1)
+        # y_pred = np.argmax(model.predict(x_test), axis=1)
     y_test = np.argmax(y_test, axis=1)
 
     y_test = (y_test >= 1).astype(float)
-    #y_pred = (y_pred >= 1).astype(int)
+    # y_pred = (y_pred >= 1).astype(int)
 
     for i in range(num_classes):
         fpr[i], tpr[i], _ = roc_curve(y_test, y_pred)
@@ -101,7 +94,7 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
 
     lw = 2
     plt.plot(fpr[0], tpr[0], color='darkorange',
-             lw=lw, label='ROC curve 0 (area = %0.2f)' % roc_auc[0])
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[0])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
