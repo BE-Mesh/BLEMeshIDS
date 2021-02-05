@@ -15,7 +15,7 @@ from sklearn.preprocessing import normalize
 
 from lib.preproc import load
 from lib.print_confusion_matrix import pretty_plot_confusion_matrix
-from lib.trainer import stack_data, generate_model_01, BATCH_SIZE
+from lib.trainer import stack_data, generate_model_01, BATCH_SIZE, LABELS
 
 WSIZE = 2
 
@@ -39,6 +39,10 @@ def plot_2d_pca(x: np.array, y: np.array, window_size: int = WSIZE):
     ax.set_xlabel('comp_1')
     ax.set_ylabel('comp_2')
     ax.set_title(f'PCA (time window: {window_size} s)')
+    labels = {v: k for k, v in LABELS.items()}
+    for label in np.unique(y):
+        plt.scatter(X_pca[y == label, 0], X_pca[y == label, 1], label=labels[label.astype(int)])
+    plt.legend()
     plt.savefig(f'{IMAGES_DIR}{window_size}/pca.png')
     return ax
 
@@ -61,7 +65,7 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
             y_test = np.concatenate((y_test, y_t))
             y_pred = np.concatenate((y_pred, y_p))
         # y_pred = np.argmax(model.predict(x_test), axis=1)
-    #y_test = np.argmax(y_test, axis=1)
+    # y_test = np.argmax(y_test, axis=1)
     y_test = (y_test >= 1).astype(int)
     # y_pred = (y_pred >= 1).astype(int)
 
@@ -90,12 +94,12 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
 
     # Plot all ROC curves
     plt.figure()
-    #plt.plot(fpr["micro"], tpr["micro"],
+    # plt.plot(fpr["micro"], tpr["micro"],
     #         label='micro-average ROC curve (area = {0:0.2f})'
     #               ''.format(roc_auc["micro"]),
     #         color='deeppink', linestyle=':', linewidth=4)
 
-    #plt.plot(fpr["macro"], tpr["macro"],
+    # plt.plot(fpr["macro"], tpr["macro"],
     #         label='macro-average ROC curve (area = {0:0.2f})'
     #               ''.format(roc_auc["macro"]),
     #         color='lime', linestyle=':', linewidth=4)
@@ -175,6 +179,7 @@ def plot(window_size: int = WSIZE):
     X, y = stack_data(X_lst, y_lst, onehot=False, num_classes=3)
     plot_training_hist(LOGS_DIR, window_size=window_size)
     # onehot=False if print PCA and histogram
+    print('Generating pca and histogram plots... ', end='')
     plot_histogram(y, window_size=window_size)
     plot_2d_pca(X, y, window_size=window_size)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=3)
@@ -184,12 +189,12 @@ def plot(window_size: int = WSIZE):
     # Convert to tf.data.Dataset
     train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
-
+    print('done')
     train_data = train_data.batch(BATCH_SIZE).repeat().cache()
     test_data = test_data.batch(BATCH_SIZE)
     model = generate_model_01(BATCH_SIZE, num_classes=3)
     model.load_weights(f'{LOGS_DIR}weights.h5')
-    print('done')
+    print('done with model load.')
     print('Generating plots...')
     plot_training_hist(LOGS_DIR, window_size=window_size)
     plot_roc(model, test_data, window_size=window_size)
