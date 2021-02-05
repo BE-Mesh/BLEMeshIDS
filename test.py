@@ -32,9 +32,11 @@ if __name__ == '__main__':
     # Learn to predict each class against the other
     classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True,
                                              random_state=random_state))
-    y_score = classifier.fit(X_train, y_train).decision_function(X_test)
+    #y_score = classifier.fit(X_train, y_train).decision_function(X_test)
+    y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
     print(y_test)
     print(y_score)
+    print(np.argmax(y_score, axis=1) - np.argmax(y_test, axis=1))
 
     # Compute ROC curve and ROC area for each class
     fpr = dict()

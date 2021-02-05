@@ -48,17 +48,25 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    for x_test, y_test in data.take(2):
+    y_test = None
+    y_pred = None
+    for x_test, y_t in data.take(1):
         pred = model.predict(x_test)
-        y_pred = pred[:, 1] + pred[:, 2]
+        y_p = pred[:, 1] + pred[:, 2]
+        y_t = np.argmax(y_t, axis=1)
+        if y_test is None:
+            y_test = y_t
+            y_pred = y_p
+        else:
+            y_test = np.concatenate((y_test, y_t))
+            y_pred = np.concatenate((y_pred, y_p))
         # y_pred = np.argmax(model.predict(x_test), axis=1)
-    y_test = np.argmax(y_test, axis=1)
-
-    y_test = (y_test >= 1).astype(float)
+    #y_test = np.argmax(y_test, axis=1)
+    y_test = (y_test >= 1).astype(int)
     # y_pred = (y_pred >= 1).astype(int)
 
     for i in range(num_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred)
+        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred, drop_intermediate=False)
         roc_auc[i] = auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
@@ -82,15 +90,15 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
 
     # Plot all ROC curves
     plt.figure()
-    plt.plot(fpr["micro"], tpr["micro"],
-             label='micro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["micro"]),
-             color='deeppink', linestyle=':', linewidth=4)
+    #plt.plot(fpr["micro"], tpr["micro"],
+    #         label='micro-average ROC curve (area = {0:0.2f})'
+    #               ''.format(roc_auc["micro"]),
+    #         color='deeppink', linestyle=':', linewidth=4)
 
-    plt.plot(fpr["macro"], tpr["macro"],
-             label='macro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["macro"]),
-             color='lime', linestyle=':', linewidth=4)
+    #plt.plot(fpr["macro"], tpr["macro"],
+    #         label='macro-average ROC curve (area = {0:0.2f})'
+    #               ''.format(roc_auc["macro"]),
+    #         color='lime', linestyle=':', linewidth=4)
 
     lw = 2
     plt.plot(fpr[0], tpr[0], color='darkorange',
@@ -178,7 +186,7 @@ def plot(window_size: int = WSIZE):
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
 
     train_data = train_data.batch(BATCH_SIZE).repeat().cache()
-    test_data = test_data.batch(BATCH_SIZE).repeat()
+    test_data = test_data.batch(BATCH_SIZE)
     model = generate_model_01(BATCH_SIZE, num_classes=3)
     model.load_weights(f'{LOGS_DIR}weights.h5')
     print('done')
