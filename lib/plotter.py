@@ -2,18 +2,20 @@
 
 """
 
+import os
+
 import numpy as np
+import pandas as pd
+import tensorflow as tf
 from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import normalize
 
-from lib.preproc import load_dataset_folder
+from lib.preproc import load
 from lib.print_confusion_matrix import pretty_plot_confusion_matrix
-from lib.trainer import stack_data, generate_model_01, BATCH_SIZE
-import os
-import tensorflow as tf
-import pandas as pd
+from lib.trainer import stack_data, generate_model_01, BATCH_SIZE, LABELS
 
 WSIZE = 2
 
@@ -37,6 +39,10 @@ def plot_2d_pca(x: np.array, y: np.array, window_size: int = WSIZE):
     ax.set_xlabel('comp_1')
     ax.set_ylabel('comp_2')
     ax.set_title(f'PCA (time window: {window_size} s)')
+    labels = {v: k for k, v in LABELS.items()}
+    for label in np.unique(y):
+        plt.scatter(X_pca[y == label, 0], X_pca[y == label, 1], label=labels[label.astype(int)])
+    plt.legend()
     plt.savefig(f'{IMAGES_DIR}{window_size}/pca.png')
     return ax
 
@@ -46,24 +52,61 @@ def plot_roc(model, data: tf.data.Dataset, num_classes=3, window_size: int = WSI
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    for x_test, y_test in data.take(2):
-        y_pred = np.argmax(model.predict(x_test), axis=1)
-    y_test = np.argmax(y_test, axis=1)
-
+    y_test = None
+    y_pred = None
+    for x_test, y_t in data.take(1):
+        pred = model.predict(x_test)
+        y_p = pred[:, 1] + pred[:, 2]
+        y_t = np.argmax(y_t, axis=1)
+        if y_test is None:
+            y_test = y_t
+            y_pred = y_p
+        else:
+            y_test = np.concatenate((y_test, y_t))
+            y_pred = np.concatenate((y_pred, y_p))
+        # y_pred = np.argmax(model.predict(x_test), axis=1)
+    # y_test = np.argmax(y_test, axis=1)
     y_test = (y_test >= 1).astype(int)
-    y_pred = (y_pred >= 1).astype(int)
+    # y_pred = (y_pred >= 1).astype(int)
 
     for i in range(num_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred)
+        fpr[i], tpr[i], _ = roc_curve(y_test, y_pred, drop_intermediate=False)
         roc_auc[i] = auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
     fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_pred.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(num_classes)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(num_classes):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= num_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    # Plot all ROC curves
+    plt.figure()
+    # plt.plot(fpr["micro"], tpr["micro"],
+    #         label='micro-average ROC curve (area = {0:0.2f})'
+    #               ''.format(roc_auc["micro"]),
+    #         color='deeppink', linestyle=':', linewidth=4)
+
+    # plt.plot(fpr["macro"], tpr["macro"],
+    #         label='macro-average ROC curve (area = {0:0.2f})'
+    #               ''.format(roc_auc["macro"]),
+    #         color='lime', linestyle=':', linewidth=4)
+
     lw = 2
-    plt.plot(fpr[2], tpr[2], color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
+    plt.plot(fpr[0], tpr[0], color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[0])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -118,7 +161,7 @@ def plot_confusion_mat(model, data: tf.data.Dataset, num_classes=3, window_size:
 
 
 LOGS_DIR = 'logs/'
-DATA_DIR = 'data/'
+DATA_DIR = 'data/proc'
 DATA_LEGIT_PATH = f'{DATA_DIR}legit/0.csv'
 DATA_BH_PATH = f'{DATA_DIR}black_hole/0.csv'
 
@@ -132,24 +175,26 @@ def plot(window_size: int = WSIZE):
         os.mkdir(path=path)
     print('done')
     print('Start loading of model... ', end='')
-    X_lst, y_lst = load_dataset_folder(DATA_DIR)
+    X_lst, y_lst = load(DATA_DIR)
     X, y = stack_data(X_lst, y_lst, onehot=False, num_classes=3)
     plot_training_hist(LOGS_DIR, window_size=window_size)
     # onehot=False if print PCA and histogram
+    print('Generating pca and histogram plots... ', end='')
     plot_histogram(y, window_size=window_size)
     plot_2d_pca(X, y, window_size=window_size)
     X, y = stack_data(X_lst, y_lst, onehot=True, num_classes=3)
+    X = normalize(X, axis=1, norm='l2')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
     # Convert to tf.data.Dataset
     train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
-
+    print('done')
     train_data = train_data.batch(BATCH_SIZE).repeat().cache()
     test_data = test_data.batch(BATCH_SIZE)
     model = generate_model_01(BATCH_SIZE, num_classes=3)
     model.load_weights(f'{LOGS_DIR}weights.h5')
-    print('done')
+    print('done with model load.')
     print('Generating plots...')
     plot_training_hist(LOGS_DIR, window_size=window_size)
     plot_roc(model, test_data, window_size=window_size)
