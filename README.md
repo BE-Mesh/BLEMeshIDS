@@ -19,8 +19,7 @@ recognition of the most classical denial of service attacks affecting this kind 
 Moreover, in order to overcome the gap created by the absence of data, we present our data collection system based on ESP32 that allowed the collection of the packets from the Network and the Model layers of the BLE Mesh stack, together with a set of experiments conducted to get the necessary data to train the IDS.
 In the last part, we describe some preliminary results obtained by the experimental setups, focusing on its strengths, as well as on the aspects where further analysis is required, hence proposing some improvements of the classification model as future work.
 
-- IEEE Xplore: not published yet
-
+- IEEE Xplore: https://ieeexplore.ieee.org/document/9430966
 - If you intend to use this work, please cite the related paper (BibTex):
 
 ```
